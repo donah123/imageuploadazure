@@ -47,7 +47,14 @@ namespace WebApplication3.Helpers
                 resultSegment = await container.ListBlobsSegmentedAsync("", true, BlobListingDetails.All, 10, continuationToken, null, null);
                 foreach (var blobItem in resultSegment.Results)
                 {
-                    thumbnailsUrls.Add(blobItem.StorageUri.PrimaryUri.ToString());
+                    CloudBlockBlob blob = blobItem as CloudBlockBlob;
+                    SharedAccessBlobPolicy sasConstraints = new SharedAccessBlobPolicy();
+                    sasConstraints.SharedAccessStartTime = DateTimeOffset.UtcNow.AddMinutes(-5);
+                    sasConstraints.SharedAccessExpiryTime = DateTimeOffset.UtcNow.AddHours(24);
+                    sasConstraints.Permissions = SharedAccessBlobPermissions.Read;
+                    string sasBobToken = blob.GetSharedAccessSignature(sasConstraints);
+                    thumbnailsUrls.Add(blob.Uri + sasBobToken);
+                    
                 }
                 continuationToken = resultSegment.ContinuationToken;
             }
